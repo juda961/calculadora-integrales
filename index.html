@@ -1,300 +1,190 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Integrales Avanzada</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Integrales Avanzada</title>
 
-    <!-- Librerías -->
-    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.11.0/lib/browser/math.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/all.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjs@11.11.0/lib/browser/math.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #0f172a;
-            color: white;
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 950px;
-            margin: auto;
-            background: #1e293b;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.3);
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        label {
-            font-weight: bold;
-            display: block;
-            margin-top: 15px;
-        }
-
-        input, select, button {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border-radius: 8px;
-            border: none;
-            font-size: 16px;
-        }
-
-        input, select {
-            background: #334155;
-            color: white;
-        }
-
-        button {
-            background: #38bdf8;
-            color: black;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-
-        button:hover {
-            background: #0ea5e9;
-        }
-
-        .row {
-            display: flex;
-            gap: 15px;
-        }
-
-        .row > div {
-            flex: 1;
-        }
-
-        /* TABLA DE SÍMBOLOS ESTILO CALCULADORA */
-        .symbols {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .symbol-btn {
-            background: #475569;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            border: none;
-            color: white;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-
-        .symbol-btn:hover {
-            background: #64748b;
-            transform: scale(1.05);
-        }
-
-        #result {
-            margin-top: 20px;
-            padding: 15px;
-            background: #020617;
-            border-radius: 10px;
-            font-size: 18px;
-        }
-
-        #limitsRow {
-            display: none;
-        }
-
-        canvas {
-            margin-top: 25px;
-            background: white;
-            border-radius: 10px;
-        }
-    </style>
+<style>
+body{font-family:Arial;background:#0f172a;color:white;margin:0;padding:20px}
+.container{max-width:1000px;margin:auto;background:#1e293b;padding:25px;border-radius:12px}
+h1{text-align:center}
+label{font-weight:bold;margin-top:15px;display:block}
+input,select,button{width:100%;padding:10px;margin-top:5px;border-radius:8px;border:none;font-size:16px}
+input,select{background:#334155;color:white}
+button{background:#38bdf8;color:black;font-weight:bold;cursor:pointer;margin-top:20px}
+button:hover{background:#0ea5e9}
+.row{display:flex;gap:15px}
+.row>div{flex:1}
+.symbols{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:15px}
+.symbol-btn{background:#475569;padding:10px;border-radius:8px;color:white;font-weight:bold;border:none;cursor:pointer}
+.symbol-btn:hover{background:#64748b;transform:scale(1.05)}
+#result{margin-top:20px;padding:15px;background:#020617;border-radius:10px;font-size:18px}
+#limitsRow,#axisRow,#decimalsRow{display:none}
+canvas{margin-top:25px;background:white;border-radius:10px}
+</style>
 </head>
 <body>
 <div class="container">
-    <h1>Calculadora de Integrales</h1>
+<h1>Calculadora de Integrales</h1>
 
-    <label>Modo de cálculo</label>
-    <select id="mode" onchange="updateMode()">
-        <option value="indefinida" selected>Integral Indefinida</option>
-        <option value="definida">Integral Definida</option>
-        <option value="revolucion">Volumen por Revolución</option>
-    </select>
+<label>Modo de cálculo</label>
+<select id="mode" onchange="updateMode()">
+<option value="indefinida" selected>Integral Indefinida</option>
+<option value="definida">Integral Definida</option>
+<option value="revolucion">Volumen por Revolución</option>
+</select>
 
-    <label>Función f(x)</label>
-    <input type="text" id="function" placeholder="Ej: x^2 + 3*x - 1">
+<label>Función f(x)</label>
+<input type="text" id="function" placeholder="Ej: x^2">
 
-    <!-- TABLA DE SÍMBOLOS COMPLETA -->
-    <div class="symbols">
-        <button class="symbol-btn" onclick="insertSymbol('x^2')">x²</button>
-        <button class="symbol-btn" onclick="insertSymbol('x^3')">x³</button>
-        <button class="symbol-btn" onclick="insertSymbol('^')">^</button>
-        <button class="symbol-btn" onclick="insertSymbol('sqrt(')">√()</button>
-
-        <button class="symbol-btn" onclick="insertSymbol('sin(')">sin()</button>
-        <button class="symbol-btn" onclick="insertSymbol('cos(')">cos()</button>
-        <button class="symbol-btn" onclick="insertSymbol('tan(')">tan()</button>
-        <button class="symbol-btn" onclick="insertSymbol('log(')">log()</button>
-
-        <button class="symbol-btn" onclick="insertSymbol('exp(')">exp()</button>
-        <button class="symbol-btn" onclick="insertSymbol('pi')">π</button>
-        <button class="symbol-btn" onclick="insertSymbol('(')">(</button>
-        <button class="symbol-btn" onclick="insertSymbol(')')">)</button>
-    </div>
-
-    <div class="row" id="limitsRow">
-        <div>
-            <label>Límite inferior (a)</label>
-            <input type="number" id="a" placeholder="Ej: 0">
-        </div>
-        <div>
-            <label>Límite superior (b)</label>
-            <input type="number" id="b" placeholder="Ej: 2">
-        </div>
-    </div>
-
-    <div id="decimalsRow">
-    <label>Decimales</label>
-    <input type="number" id="decimals" value="4" min="0" max="10">
+<div class="symbols">
+<button class="symbol-btn" onclick="insertSymbol('x^2')">x²</button>
+<button class="symbol-btn" onclick="insertSymbol('x^3')">x³</button>
+<button class="symbol-btn" onclick="insertSymbol('^')">^</button>
+<button class="symbol-btn" onclick="insertSymbol('sqrt(')">√()</button>
+<button class="symbol-btn" onclick="insertSymbol('sin(')">sin()</button>
+<button class="symbol-btn" onclick="insertSymbol('cos(')">cos()</button>
+<button class="symbol-btn" onclick="insertSymbol('tan(')">tan()</button>
+<button class="symbol-btn" onclick="insertSymbol('log(')">log()</button>
+<button class="symbol-btn" onclick="insertSymbol('exp(')">exp()</button>
+<button class="symbol-btn" onclick="insertSymbol('pi')">π</button>
+<button class="symbol-btn" onclick="insertSymbol('(')">(</button>
+<button class="symbol-btn" onclick="insertSymbol(')')">)</button>
 </div>
 
-    <button onclick="calculate()">Calcular</button>
+<div class="row" id="limitsRow">
+<div>
+<label>Límite inferior (a)</label>
+<input type="number" id="a">
+</div>
+<div>
+<label>Límite superior (b)</label>
+<input type="number" id="b">
+</div>
+</div>
 
-    <div id="result">Resultado aparecerá aquí...</div>
+<div id="axisRow">
+<label>Eje de revolución</label>
+<select id="axis">
+<option value="x">Alrededor del eje X (Arandelas)</option>
+<option value="y">Alrededor del eje Y (Cascarones)</option>
+</select>
+</div>
 
-    <canvas id="graph" height="120"></canvas>
+<div id="decimalsRow">
+<label>Decimales</label>
+<input type="number" id="decimals" value="4" min="0" max="10">
+</div>
+
+<button onclick="calculate()">Calcular</button>
+
+<div id="result">Resultado aparecerá aquí...</div>
+<canvas id="graph" height="120"></canvas>
 </div>
 
 <script>
 let chart;
 
-function updateMode() {
-    const mode = document.getElementById('mode').value;
-    const limitsRow = document.getElementById('limitsRow');
-    const decimalsRow = document.getElementById('decimalsRow');
-
-    if (mode === 'indefinida') {
-        limitsRow.style.display = 'none';
-        decimalsRow.style.display = 'none';
-    } else {
-        limitsRow.style.display = 'flex';
-        decimalsRow.style.display = 'block';
-    }
-} else {
-        limitsRow.style.display = 'flex';
-    }
+function updateMode(){
+const mode=document.getElementById('mode').value;
+document.getElementById('limitsRow').style.display=(mode==='indefinida')?'none':'flex';
+document.getElementById('decimalsRow').style.display=(mode==='indefinida')?'none':'block';
+document.getElementById('axisRow').style.display=(mode==='revolucion')?'block':'none';
 }
 
-function insertSymbol(symbol) {
-    const input = document.getElementById('function');
-    input.value += symbol;
-    input.focus();
+function insertSymbol(s){
+const input=document.getElementById('function');
+input.value+=s;
+input.focus();
 }
 
-function numericIntegral(f, a, b, n = 1000) {
-    const h = (b - a) / n;
-    let sum = f(a) + f(b);
-
-    for (let i = 1; i < n; i++) {
-        const x = a + i * h;
-        sum += (i % 2 === 0 ? 2 : 4) * f(x);
-    }
-
-    return (h / 3) * sum;
+function numericIntegral(f,a,b,n=1000){
+const h=(b-a)/n;
+let sum=f(a)+f(b);
+for(let i=1;i<n;i++){
+const x=a+i*h;
+sum+=(i%2===0?2:4)*f(x);
+}
+return(h/3)*sum;
 }
 
-function plotFunction(expr) {
-    const xValues = [];
-    const yValues = [];
+function plotFunction(expr,a=null,b=null,shade=false){
+const xValues=[];
+const yValues=[];
 
-    for (let x = -10; x <= 10; x += 0.1) {
-        try {
-            const y = math.evaluate(expr, { x: x });
-            xValues.push(x);
-            yValues.push(y);
-        } catch {
-            xValues.push(x);
-            yValues.push(null);
-        }
-    }
-
-    const ctx = document.getElementById('graph').getContext('2d');
-
-    if (chart) chart.destroy();
-
-    chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: xValues,
-            datasets: [{
-                label: 'f(x)',
-                data: yValues,
-                borderWidth: 2,
-                fill: false,
-                tension: 0.2
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                x: { title: { display: true, text: 'x' } },
-                y: { title: { display: true, text: 'f(x)' } }
-            }
-        }
-    });
+for(let x=-10;x<=10;x+=0.1){
+try{
+const y=math.evaluate(expr,{x:x});
+xValues.push(x);
+yValues.push(y);
+}catch{
+xValues.push(x);
+yValues.push(null);
+}
 }
 
-function calculate() {
-    const mode = document.getElementById('mode').value;
-    const expr = document.getElementById('function').value;
-    const decimals = parseInt(document.getElementById('decimals').value) || 4;
-    const resultDiv = document.getElementById('result');
+const ctx=document.getElementById('graph').getContext('2d');
+if(chart) chart.destroy();
 
-    if (!expr) {
-        resultDiv.innerHTML = 'Por favor ingresa una función.';
-        return;
-    }
+chart=new Chart(ctx,{type:'line',data:{labels:xValues,datasets:[{
+label:'f(x)',data:yValues,borderWidth:2,fill:shade
+}]},options:{responsive:true}}
+);
+}
 
-    try {
-        if (mode === 'indefinida') {
-            const integral = nerdamer.integrate(expr, 'x').toString();
-            resultDiv.innerHTML = `∫ ${expr} dx = ${integral} + C`;
-            plotFunction(expr);
-            return;
-        }
+function calculate(){
+const mode=document.getElementById('mode').value;
+const expr=document.getElementById('function').value;
+const resultDiv=document.getElementById('result');
 
-        const a = parseFloat(document.getElementById('a').value);
-        const b = parseFloat(document.getElementById('b').value);
+if(!expr){resultDiv.innerHTML='Ingresa una función.';return;}
 
-        if (isNaN(a) || isNaN(b)) {
-            resultDiv.innerHTML = 'Debes ingresar los límites a y b.';
-            return;
-        }
+try{
+if(mode==='indefinida'){
+const integral=nerdamer.integrate(expr,'x').toString();
+resultDiv.innerHTML=`∫ ${expr} dx = ${integral} + C`;
+plotFunction(expr);
+return;
+}
 
-        const f = (x) => math.evaluate(expr, { x: x });
+const a=parseFloat(document.getElementById('a').value);
+const b=parseFloat(document.getElementById('b').value);
+const decimals=parseInt(document.getElementById('decimals').value)||4;
+if(isNaN(a)||isNaN(b)){resultDiv.innerHTML='Ingresa límites válidos.';return;}
 
-        if (mode === 'definida') {
-            const value = numericIntegral(f, a, b);
-            resultDiv.innerHTML = `∫₍${a}₎⁽${b}₎ ${expr} dx ≈ ${value.toFixed(decimals)}`;
-        }
+const f=(x)=>math.evaluate(expr,{x:x});
 
-        if (mode === 'revolucion') {
-            const volume = Math.PI * numericIntegral((x) => Math.pow(f(x), 2), a, b);
-            resultDiv.innerHTML = `Volumen (arandelas eje X) ≈ ${volume.toFixed(decimals)}`;
-        }
+if(mode==='definida'){
+const value=numericIntegral(f,a,b);
+resultDiv.innerHTML=`Área ≈ ${value.toFixed(decimals)}`;
+plotFunction(expr,a,b,true);
+}
 
-        plotFunction(expr);
+if(mode==='revolucion'){
+const axis=document.getElementById('axis').value;
+let volume;
 
-    } catch (error) {
-        resultDiv.innerHTML = 'Error al calcular. Revisa la función (usa x como variable).';
-    }
+if(axis==='x'){
+volume=Math.PI*numericIntegral((x)=>Math.pow(f(x),2),a,b);
+resultDiv.innerHTML=`Volumen (eje X - Arandelas) ≈ ${volume.toFixed(decimals)}`;
+}
+
+if(axis==='y'){
+volume=2*Math.PI*numericIntegral((x)=>x*f(x),a,b);
+resultDiv.innerHTML=`Volumen (eje Y - Cascarones) ≈ ${volume.toFixed(decimals)}`;
+}
+
+plotFunction(expr,a,b,true);
+}
+
+}catch{
+resultDiv.innerHTML='Error en la función. Usa x como variable.';
+}
 }
 
 updateMode();
