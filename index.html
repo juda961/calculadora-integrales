@@ -25,7 +25,7 @@
       background: #1e293b;
       padding: 30px;
       border-radius: 16px;
-      width: 440px;
+      width: 460px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
 
@@ -49,6 +49,31 @@
       font-size: 16px;
     }
 
+    .symbol-box {
+      margin-top: 10px;
+      background: #020617;
+      padding: 10px;
+      border-radius: 10px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+    }
+
+    .symbol-btn {
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      background: #38bdf8;
+      color: #020617;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .symbol-btn:hover {
+      background: #0ea5e9;
+    }
+
     button {
       width: 100%;
       padding: 12px;
@@ -57,14 +82,14 @@
       border-radius: 10px;
       font-size: 16px;
       cursor: pointer;
-      background: #38bdf8;
+      background: #22c55e;
       color: #020617;
       font-weight: bold;
       transition: 0.3s;
     }
 
     button:hover {
-      background: #0ea5e9;
+      background: #16a34a;
     }
 
     .result {
@@ -78,15 +103,15 @@
       word-break: break-word;
     }
 
+    .hidden {
+      display: none;
+    }
+
     .note {
       margin-top: 10px;
       font-size: 12px;
       color: #94a3b8;
       text-align: center;
-    }
-
-    .hidden {
-      display: none;
     }
   </style>
 </head>
@@ -101,7 +126,28 @@
     </select>
 
     <label>Función f(x):</label>
-    <input type="text" id="func" placeholder="Ej: sin(x), x^2, exp(x)" />
+    <input type="text" id="func" placeholder="Ej: sin(x) + x^2" />
+
+    <div class="symbol-box">
+      <button class="symbol-btn" onclick="insertar('x')">x</button>
+      <button class="symbol-btn" onclick="insertar('^')">^</button>
+      <button class="symbol-btn" onclick="insertar('sqrt()')">√</button>
+      <button class="symbol-btn" onclick="insertar('sin()')">sin</button>
+      <button class="symbol-btn" onclick="insertar('cos()')">cos</button>
+      <button class="symbol-btn" onclick="insertar('tan()')">tan</button>
+      <button class="symbol-btn" onclick="insertar('log()')">log</button>
+      <button class="symbol-btn" onclick="insertar('exp()')">exp</button>
+      <button class="symbol-btn" onclick="insertar('pi')">π</button>
+      <button class="symbol-btn" onclick="insertar('(')">(</button>
+      <button class="symbol-btn" onclick="insertar(')')">)</button>
+      <button class="symbol-btn" onclick="insertar('+')">+</button>
+      <button class="symbol-btn" onclick="insertar('-')">−</button>
+      <button class="symbol-btn" onclick="insertar('*')">×</button>
+      <button class="symbol-btn" onclick="insertar('/')">÷</button>
+      <button class="symbol-btn" onclick="insertar('^2')">x²</button>
+      <button class="symbol-btn" onclick="insertar('^3')">x³</button>
+      <button class="symbol-btn" onclick="borrar()">⌫</button>
+    </div>
 
     <div id="limites">
       <label>Límite inferior (a):</label>
@@ -111,18 +157,33 @@
       <input type="number" id="b" placeholder="Ej: 5" />
     </div>
 
-    <label>Decimales del resultado (solo definida):</label>
+    <label>Decimales (solo definida):</label>
     <input type="number" id="decimales" value="4" min="0" max="10" />
 
     <button onclick="calcularIntegral()">Calcular Integral</button>
 
     <div class="result" id="resultado">Resultado: —</div>
-    <div class="note">
-      Definida: cálculo numérico | Indefinida: resultado simbólico + C
-    </div>
+    <div class="note">Incluye símbolos matemáticos para escribir funciones fácilmente</div>
   </div>
 
   <script>
+    function insertar(texto) {
+      const input = document.getElementById("func");
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const valor = input.value;
+
+      input.value = valor.substring(0, start) + texto + valor.substring(end);
+      input.focus();
+      input.selectionStart = input.selectionEnd = start + texto.length;
+    }
+
+    function borrar() {
+      const input = document.getElementById("func");
+      input.value = input.value.slice(0, -1);
+      input.focus();
+    }
+
     function cambiarTipo() {
       const tipo = document.getElementById("tipo").value;
       const limites = document.getElementById("limites");
@@ -157,7 +218,6 @@
         return;
       }
 
-      // INTEGRAL INDEFINIDA (simbólica)
       if (tipo === "indefinida") {
         try {
           const integral = nerdamer.integrate(funcStr, 'x').toString();
@@ -168,14 +228,12 @@
         return;
       }
 
-      // INTEGRAL DEFINIDA (numérica)
       const aInput = document.getElementById("a").value;
       const bInput = document.getElementById("b").value;
-      const decimalesInput = document.getElementById("decimales").value;
-      const decimales = parseInt(decimalesInput) || 4;
+      const decimales = parseInt(document.getElementById("decimales").value) || 4;
 
       if (aInput === "" || bInput === "") {
-        resultadoDiv.textContent = "Resultado: Ingresa los límites a y b para la integral definida";
+        resultadoDiv.textContent = "Resultado: Ingresa los límites a y b";
         return;
       }
 
