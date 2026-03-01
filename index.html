@@ -32,6 +32,12 @@ canvas{margin-top:25px;background:white;border-radius:10px}
 <div class="container">
 <h1>Calculadora de Integrales</h1>
 
+<label>Variable de integración</label>
+<select id="variable">
+<option value="x" selected>x</option>
+<option value="y">y</option>
+</select>
+
 <label>Modo de cálculo</label>
 <select id="mode" onchange="updateMode()">
 <option value="indefinida" selected>Integral Indefinida</option>
@@ -39,12 +45,10 @@ canvas{margin-top:25px;background:white;border-radius:10px}
 <option value="revolucion">Volumen por Revolución</option>
 </select>
 
-<label>Función f(x)</label>
-<input type="text" id="function" placeholder="Ej: x^2">
+<label>Función f(variable)</label>
+<input type="text" id="function" placeholder="Ej: x^2 o y^2">
 
 <div class="symbols">
-<button class="symbol-btn" onclick="insertSymbol('x^2')">x²</button>
-<button class="symbol-btn" onclick="insertSymbol('x^3')">x³</button>
 <button class="symbol-btn" onclick="insertSymbol('^')">^</button>
 <button class="symbol-btn" onclick="insertSymbol('sqrt(')">√()</button>
 <button class="symbol-btn" onclick="insertSymbol('sin(')">sin()</button>
@@ -55,6 +59,8 @@ canvas{margin-top:25px;background:white;border-radius:10px}
 <button class="symbol-btn" onclick="insertSymbol('pi')">π</button>
 <button class="symbol-btn" onclick="insertSymbol('(')">(</button>
 <button class="symbol-btn" onclick="insertSymbol(')')">)</button>
+<button class="symbol-btn" onclick="insertSymbol('x')">x</button>
+<button class="symbol-btn" onclick="insertSymbol('y')">y</button>
 </div>
 
 <div class="row" id="limitsRow">
@@ -107,83 +113,99 @@ function numericIntegral(f,a,b,n=1000){
 const h=(b-a)/n;
 let sum=f(a)+f(b);
 for(let i=1;i<n;i++){
-const x=a+i*h;
-sum+=(i%2===0?2:4)*f(x);
+const v=a+i*h;
+sum+=(i%2===0?2:4)*f(v);
 }
 return(h/3)*sum;
 }
 
-function plotFunction(expr,a=null,b=null,shade=false){
-const xValues=[];
-const yValues=[];
+function plotFunction(expr,variable){
+const values=[];
+const results=[];
 
-for(let x=-10;x<=10;x+=0.1){
+for(let t=-10;t<=10;t+=0.1){
 try{
-const y=math.evaluate(expr,{x:x});
-xValues.push(x);
-yValues.push(y);
+const scope={};
+scope[variable]=t;
+const r=math.evaluate(expr,scope);
+values.push(t);
+results.push(r);
 }catch{
-xValues.push(x);
-yValues.push(null);
+values.push(t);
+results.push(null);
 }
 }
 
 const ctx=document.getElementById('graph').getContext('2d');
 if(chart) chart.destroy();
 
-chart=new Chart(ctx,{type:'line',data:{labels:xValues,datasets:[{
-label:'f(x)',data:yValues,borderWidth:2,fill:shade
-}]},options:{responsive:true}}
-);
+chart=new Chart(ctx,{type:'line',data:{labels:values,datasets:[{
+label:`f(${variable})`,data:results,borderWidth:2,fill:false,tension:0.2
+}]},options:{responsive:true,scales:{
+x:{title:{display:true,text:variable}},
+y:{title:{display:true,text:`f(${variable})`}}
+}}});
 }
 
 function calculate(){
 const mode=document.getElementById('mode').value;
 const expr=document.getElementById('function').value;
+const variable=document.getElementById('variable').value;
 const resultDiv=document.getElementById('result');
 
 if(!expr){resultDiv.innerHTML='Ingresa una función.';return;}
 
 try{
+// INTEGRAL INDEFINIDA
 if(mode==='indefinida'){
-const integral=nerdamer.integrate(expr,'x').toString();
-resultDiv.innerHTML=`∫ ${expr} dx = ${integral} + C`;
-plotFunction(expr);
+const integral=nerdamer.integrate(expr,variable).toString();
+resultDiv.innerHTML=`∫ ${expr} d${variable} = ${integral} + C`;
+plotFunction(expr,variable);
 return;
 }
 
 const a=parseFloat(document.getElementById('a').value);
 const b=parseFloat(document.getElementById('b').value);
 const decimals=parseInt(document.getElementById('decimals').value)||4;
-if(isNaN(a)||isNaN(b)){resultDiv.innerHTML='Ingresa límites válidos.';return;}
 
-const f=(x)=>math.evaluate(expr,{x:x});
-
-if(mode==='definida'){
-const value=numericIntegral(f,a,b);
-resultDiv.innerHTML=`Área ≈ ${value.toFixed(decimals)}`;
-plotFunction(expr,a,b,true);
+if(isNaN(a)||isNaN(b)){
+resultDiv.innerHTML='Ingresa límites válidos.';
+return;
 }
 
+const f=(v)=>{
+const scope={};
+scope[variable]=v;
+return math.evaluate(expr,scope);
+};
+
+// INTEGRAL DEFINIDA
+if(mode==='definida'){
+const value=numericIntegral(f,a,b);
+resultDiv.innerHTML=`∫₍${a}₎⁽${b}⁾ ${expr} d${variable} ≈ ${value.toFixed(decimals)}`;
+plotFunction(expr,variable);
+}
+
+// VOLUMEN POR REVOLUCIÓN
 if(mode==='revolucion'){
 const axis=document.getElementById('axis').value;
 let volume;
 
 if(axis==='x'){
-volume=Math.PI*numericIntegral((x)=>Math.pow(f(x),2),a,b);
-resultDiv.innerHTML=`Volumen (eje X - Arandelas) ≈ ${volume.toFixed(decimals)}`;
+volume=Math.PI*numericIntegral((v)=>Math.pow(f(v),2),a,b);
+resultDiv.innerHTML=`Volumen (revolución eje X) ≈ ${volume.toFixed(decimals)}`;
 }
 
 if(axis==='y'){
-volume=2*Math.PI*numericIntegral((x)=>x*f(x),a,b);
-resultDiv.innerHTML=`Volumen (eje Y - Cascarones) ≈ ${volume.toFixed(decimals)}`;
+volume=2*Math.PI*numericIntegral((v)=>v*f(v),a,b);
+resultDiv.innerHTML=`Volumen (revolución eje Y) ≈ ${volume.toFixed(decimals)}`;
 }
 
-plotFunction(expr,a,b,true);
+plotFunction(expr,variable);
 }
 
-}catch{
-resultDiv.innerHTML='Error en la función. Usa x como variable.';
+}catch(e){
+resultDiv.innerHTML='Error en la función. Usa la variable seleccionada (x o y).';
 }
 }
 
