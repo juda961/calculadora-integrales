@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Calculadora de Integrales</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
+  <!-- Librería para integrales indefinidas (simbólicas) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/nerdamer/1.1.13/nerdamer.core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/nerdamer/1.1.13/Calculus.min.js"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -21,7 +25,7 @@
       background: #1e293b;
       padding: 30px;
       border-radius: 16px;
-      width: 420px;
+      width: 440px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
 
@@ -36,7 +40,7 @@
       font-weight: bold;
     }
 
-    input {
+    input, select {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
@@ -71,6 +75,7 @@
       text-align: center;
       font-size: 18px;
       min-height: 40px;
+      word-break: break-word;
     }
 
     .note {
@@ -79,33 +84,56 @@
       color: #94a3b8;
       text-align: center;
     }
+
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Calculadora de Integrales</h1>
 
+    <label>Tipo de integral:</label>
+    <select id="tipo" onchange="cambiarTipo()">
+      <option value="definida">Integral Definida</option>
+      <option value="indefinida">Integral Indefinida</option>
+    </select>
+
     <label>Función f(x):</label>
     <input type="text" id="func" placeholder="Ej: sin(x), x^2, exp(x)" />
 
-    <label>Límite inferior (a) — opcional:</label>
-    <input type="number" id="a" placeholder="Ej: 0" />
+    <div id="limites">
+      <label>Límite inferior (a):</label>
+      <input type="number" id="a" placeholder="Ej: 0" />
 
-    <label>Límite superior (b) — opcional:</label>
-    <input type="number" id="b" placeholder="Ej: 5" />
+      <label>Límite superior (b):</label>
+      <input type="number" id="b" placeholder="Ej: 5" />
+    </div>
 
-    <label>Decimales del resultado:</label>
+    <label>Decimales del resultado (solo definida):</label>
     <input type="number" id="decimales" value="4" min="0" max="10" />
 
     <button onclick="calcularIntegral()">Calcular Integral</button>
 
     <div class="result" id="resultado">Resultado: —</div>
     <div class="note">
-      Si dejas a y b vacíos, la calculadora no puede resolver integrales indefinidas (solo definidas).
+      Definida: cálculo numérico | Indefinida: resultado simbólico + C
     </div>
   </div>
 
   <script>
+    function cambiarTipo() {
+      const tipo = document.getElementById("tipo").value;
+      const limites = document.getElementById("limites");
+
+      if (tipo === "definida") {
+        limites.classList.remove("hidden");
+      } else {
+        limites.classList.add("hidden");
+      }
+    }
+
     function simpson(f, a, b, n = 1000) {
       if (n % 2 !== 0) n++;
       const h = (b - a) / n;
@@ -120,22 +148,34 @@
     }
 
     function calcularIntegral() {
+      const tipo = document.getElementById("tipo").value;
       const funcStr = document.getElementById("func").value;
-      const aInput = document.getElementById("a").value;
-      const bInput = document.getElementById("b").value;
-      const decimalesInput = document.getElementById("decimales").value;
       const resultadoDiv = document.getElementById("resultado");
-
-      const decimales = parseInt(decimalesInput) || 4;
 
       if (!funcStr) {
         resultadoDiv.textContent = "Resultado: Ingresa una función válida";
         return;
       }
 
-      // Si no hay límites, no es integral definida
+      // INTEGRAL INDEFINIDA (simbólica)
+      if (tipo === "indefinida") {
+        try {
+          const integral = nerdamer.integrate(funcStr, 'x').toString();
+          resultadoDiv.textContent = `Resultado: ∫ f(x) dx = ${integral} + C`;
+        } catch (error) {
+          resultadoDiv.textContent = "Error: No se pudo calcular la integral indefinida";
+        }
+        return;
+      }
+
+      // INTEGRAL DEFINIDA (numérica)
+      const aInput = document.getElementById("a").value;
+      const bInput = document.getElementById("b").value;
+      const decimalesInput = document.getElementById("decimales").value;
+      const decimales = parseInt(decimalesInput) || 4;
+
       if (aInput === "" || bInput === "") {
-        resultadoDiv.textContent = "Resultado: Esta calculadora solo resuelve integrales definidas (con límites a y b)";
+        resultadoDiv.textContent = "Resultado: Ingresa los límites a y b para la integral definida";
         return;
       }
 
