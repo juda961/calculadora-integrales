@@ -32,31 +32,42 @@
 
     h1, h2 {
       text-align: center;
+      margin-bottom: 15px;
     }
 
     label {
       display: block;
-      margin-top: 12px;
+      margin-top: 14px;
       font-weight: bold;
     }
 
     input, select {
       width: 100%;
-      padding: 8px;
-      margin-top: 4px;
+      padding: 10px;
+      margin-top: 6px;
       border-radius: 8px;
       border: none;
       font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    .section {
+      margin-top: 10px;
     }
 
     .row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .hidden {
+      display: none;
     }
 
     .symbol-box {
-      margin-top: 10px;
+      margin-top: 12px;
       background: #020617;
       padding: 10px;
       border-radius: 10px;
@@ -73,6 +84,7 @@
       color: #020617;
       font-weight: bold;
       cursor: pointer;
+      font-size: 14px;
     }
 
     .symbol-btn:hover {
@@ -82,7 +94,7 @@
     button.main {
       width: 100%;
       padding: 12px;
-      margin-top: 15px;
+      margin-top: 18px;
       border: none;
       border-radius: 10px;
       font-size: 16px;
@@ -107,6 +119,7 @@
       text-align: center;
       font-size: 18px;
       min-height: 40px;
+      word-break: break-word;
     }
   </style>
 </head>
@@ -114,16 +127,22 @@
   <div class="container">
     <h1>Calculadora de Integrales Avanzada</h1>
 
-    <label>Modo:</label>
-    <select id="modo">
-      <option value="definida">Integral Definida</option>
-      <option value="indefinida">Integral Indefinida</option>
-      <option value="revolucion">Sólido de Revolución</option>
-    </select>
+    <!-- MODO (ARREGLADO: por defecto indefinida y sin solaparse) -->
+    <div class="section">
+      <label>Modo de cálculo:</label>
+      <select id="modo" onchange="actualizarInterfaz()">
+        <option value="indefinida" selected>Integral Indefinida</option>
+        <option value="definida">Integral Definida</option>
+        <option value="revolucion">Sólido de Revolución</option>
+      </select>
+    </div>
 
-    <label>Función f(x):</label>
-    <input type="text" id="func" placeholder="Ej: x^2, sin(x), sqrt(x)" />
+    <div class="section">
+      <label>Función f(x):</label>
+      <input type="text" id="func" placeholder="Ej: x^2, sin(x), sqrt(x)" />
+    </div>
 
+    <!-- Panel de símbolos -->
     <div class="symbol-box">
       <button class="symbol-btn" onclick="insertar('x')">x</button>
       <button class="symbol-btn" onclick="insertar('^')">^</button>
@@ -134,34 +153,44 @@
       <button class="symbol-btn" onclick="insertar('cos()')">cos</button>
       <button class="symbol-btn" onclick="insertar('tan()')">tan</button>
       <button class="symbol-btn" onclick="insertar('log()')">log</button>
+      <button class="symbol-btn" onclick="insertar('exp()')">exp</button>
       <button class="symbol-btn" onclick="insertar('pi')">π</button>
       <button class="symbol-btn" onclick="insertar('(')">(</button>
       <button class="symbol-btn" onclick="insertar(')')">)</button>
       <button class="symbol-btn" onclick="insertar('+')">+</button>
-      <button class="symbol-btn" onclick="insertar('-')">-</button>
-      <button class="symbol-btn" onclick="insertar('*')">*</button>
-      <button class="symbol-btn" onclick="insertar('/')">/</button>
+      <button class="symbol-btn" onclick="insertar('-')">−</button>
+      <button class="symbol-btn" onclick="insertar('*')">×</button>
+      <button class="symbol-btn" onclick="insertar('/')">÷</button>
     </div>
 
-    <div class="row">
-      <div>
-        <label>Límite inferior (a):</label>
-        <input type="number" id="a" placeholder="Ej: 0" />
-      </div>
-      <div>
-        <label>Límite superior (b):</label>
-        <input type="number" id="b" placeholder="Ej: 5" />
+    <!-- LIMITES (ahora sí se ocultan correctamente) -->
+    <div id="seccion-limites" class="section hidden">
+      <div class="row">
+        <div>
+          <label>Límite inferior (a):</label>
+          <input type="number" id="a" placeholder="Ej: 0" />
+        </div>
+        <div>
+          <label>Límite superior (b):</label>
+          <input type="number" id="b" placeholder="Ej: 5" />
+        </div>
       </div>
     </div>
 
-    <label>Eje de revolución (solo revolución):</label>
-    <select id="eje">
-      <option value="x">Alrededor del eje X (Arandelas)</option>
-      <option value="y">Alrededor del eje Y (Cascarones)</option>
-    </select>
+    <!-- REVOLUCION -->
+    <div id="seccion-revolucion" class="section hidden">
+      <label>Eje de revolución:</label>
+      <select id="eje">
+        <option value="x">Alrededor del eje X (Arandelas)</option>
+        <option value="y">Alrededor del eje Y (Cascarones)</option>
+      </select>
+    </div>
 
-    <label>Decimales:</label>
-    <input type="number" id="decimales" value="4" min="0" max="10" />
+    <!-- DECIMALES (solo definida y revolución) -->
+    <div id="seccion-decimales" class="section hidden">
+      <label>Decimales del resultado:</label>
+      <input type="number" id="decimales" value="4" min="0" max="10" />
+    </div>
 
     <button class="main" onclick="calcular()">Calcular y Graficar</button>
 
@@ -174,10 +203,35 @@
   <script>
     let chart;
 
+    // NUEVO: controla qué se muestra según el modo
+    function actualizarInterfaz() {
+      const modo = document.getElementById("modo").value;
+      const limites = document.getElementById("seccion-limites");
+      const revolucion = document.getElementById("seccion-revolucion");
+      const decimales = document.getElementById("seccion-decimales");
+
+      if (modo === "indefinida") {
+        limites.classList.add("hidden");
+        revolucion.classList.add("hidden");
+        decimales.classList.add("hidden");
+      } else if (modo === "definida") {
+        limites.classList.remove("hidden");
+        revolucion.classList.add("hidden");
+        decimales.classList.remove("hidden");
+      } else if (modo === "revolucion") {
+        limites.classList.remove("hidden");
+        revolucion.classList.remove("hidden");
+        decimales.classList.remove("hidden");
+      }
+    }
+
     function insertar(txt) {
       const input = document.getElementById("func");
-      input.value += txt;
+      const start = input.selectionStart || input.value.length;
+      const end = input.selectionEnd || input.value.length;
+      input.value = input.value.substring(0, start) + txt + input.value.substring(end);
       input.focus();
+      input.selectionStart = input.selectionEnd = start + txt.length;
     }
 
     function simpson(f, a, b, n = 1000) {
@@ -194,7 +248,7 @@
     function graficar(f, a, b) {
       const xs = [];
       const ys = [];
-      const pasos = 100;
+      const pasos = 120;
       const step = (b - a) / pasos;
 
       for (let i = 0; i <= pasos; i++) {
@@ -217,23 +271,13 @@
             fill: false
           }]
         },
-        options: {
-          responsive: true,
-          scales: {
-            x: { title: { display: true, text: 'x' } },
-            y: { title: { display: true, text: 'f(x)' } }
-          }
-        }
+        options: { responsive: true }
       });
     }
 
     function calcular() {
       const modo = document.getElementById("modo").value;
       const funcStr = document.getElementById("func").value;
-      const a = parseFloat(document.getElementById("a").value);
-      const b = parseFloat(document.getElementById("b").value);
-      const eje = document.getElementById("eje").value;
-      const dec = parseInt(document.getElementById("decimales").value) || 4;
       const resDiv = document.getElementById("resultado");
 
       if (!funcStr) {
@@ -242,19 +286,24 @@
       }
 
       try {
-        const expr = math.compile(funcStr);
-        const f = (x) => expr.evaluate({ x });
-
+        // INDEFINIDA (por defecto)
         if (modo === "indefinida") {
           const integral = nerdamer.integrate(funcStr, 'x').toString();
           resDiv.textContent = `∫ f(x) dx = ${integral} + C`;
           return;
         }
 
+        const a = parseFloat(document.getElementById("a").value);
+        const b = parseFloat(document.getElementById("b").value);
+        const dec = parseInt(document.getElementById("decimales").value) || 4;
+
         if (isNaN(a) || isNaN(b)) {
-          resDiv.textContent = "Ingresa límites válidos";
+          resDiv.textContent = "Ingresa límites válidos (a y b)";
           return;
         }
+
+        const expr = math.compile(funcStr);
+        const f = (x) => expr.evaluate({ x });
 
         if (modo === "definida") {
           const resultado = simpson(f, a, b);
@@ -263,7 +312,9 @@
         }
 
         if (modo === "revolucion") {
+          const eje = document.getElementById("eje").value;
           let volumen;
+
           if (eje === "x") {
             const g = (x) => Math.PI * Math.pow(f(x), 2);
             volumen = simpson(g, a, b);
@@ -280,6 +331,9 @@
         resDiv.textContent = "Error en la función matemática";
       }
     }
+
+    // IMPORTANTE: inicializa la interfaz correctamente (indefinida por defecto)
+    actualizarInterfaz();
   </script>
 </body>
 </html>
