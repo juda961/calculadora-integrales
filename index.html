@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Integrales</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 16px;
+      width: 400px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #38bdf8;
+      color: #020617;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #0ea5e9;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #020617;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 18px;
+      min-height: 40px;
+    }
+
+    .note {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #94a3b8;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Calculadora de Integrales</h1>
+
+    <label>Función f(x):</label>
+    <input type="text" id="func" placeholder="Ej: sin(x), x^2, exp(x)" />
+
+    <label>Límite inferior (a):</label>
+    <input type="number" id="a" placeholder="Ej: 0" />
+
+    <label>Límite superior (b):</label>
+    <input type="number" id="b" placeholder="Ej: 5" />
+
+    <button onclick="calcularIntegral()">Calcular Integral Definida</button>
+
+    <div class="result" id="resultado">Resultado: —</div>
+    <div class="note">Usa funciones como: sin(x), cos(x), x^2, sqrt(x), log(x)</div>
+  </div>
+
+  <script>
+    function simpson(f, a, b, n = 1000) {
+      if (n % 2 !== 0) n++;
+      const h = (b - a) / n;
+      let sum = f(a) + f(b);
+
+      for (let i = 1; i < n; i++) {
+        const x = a + i * h;
+        sum += (i % 2 === 0 ? 2 : 4) * f(x);
+      }
+
+      return (h / 3) * sum;
+    }
+
+    function calcularIntegral() {
+      const funcStr = document.getElementById("func").value;
+      const a = parseFloat(document.getElementById("a").value);
+      const b = parseFloat(document.getElementById("b").value);
+      const resultadoDiv = document.getElementById("resultado");
+
+      if (!funcStr || isNaN(a) || isNaN(b)) {
+        resultadoDiv.textContent = "Resultado: Ingresa todos los datos correctamente";
+        return;
+      }
+
+      try {
+        const expr = math.compile(funcStr);
+        const f = (x) => expr.evaluate({ x });
+        const resultado = simpson(f, a, b);
+
+        resultadoDiv.textContent = `Resultado: ∫[${a}, ${b}] = ${resultado.toFixed(6)}`;
+      } catch (error) {
+        resultadoDiv.textContent = "Error: Función no válida";
+      }
+    }
+  </script>
+</body>
+</html>
