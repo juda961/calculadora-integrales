@@ -160,8 +160,10 @@
         </div>
     </div>
 
+    <div id="decimalsRow">
     <label>Decimales</label>
     <input type="number" id="decimals" value="4" min="0" max="10">
+</div>
 
     <button onclick="calculate()">Calcular</button>
 
@@ -176,10 +178,16 @@ let chart;
 function updateMode() {
     const mode = document.getElementById('mode').value;
     const limitsRow = document.getElementById('limitsRow');
+    const decimalsRow = document.getElementById('decimalsRow');
 
     if (mode === 'indefinida') {
         limitsRow.style.display = 'none';
+        decimalsRow.style.display = 'none';
     } else {
+        limitsRow.style.display = 'flex';
+        decimalsRow.style.display = 'block';
+    }
+} else {
         limitsRow.style.display = 'flex';
     }
 }
